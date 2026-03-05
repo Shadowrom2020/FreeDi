@@ -158,23 +158,33 @@ fi
 
 
 # Ask for mainboard type
-if dialog --stdout --title "Mainboard type" --backtitle "FreeDi installation" --yesno "Do you use the stock mainboard?" 7 60; then
-        STOCK_MAINBOARD=true
-        clear
-        sleep 1
-        echo "Starting the installation for stock mainboard..."
+dialog --stdout --title "Mainboard type" --backtitle "FreeDi installation" --yesno "Do you use the stock mainboard?" 7 60
+dialog_exit=$?
+
+if [ $dialog_exit -eq 0 ]; then
+    # User selected "Yes"
+    STOCK_MAINBOARD=true
+    clear
+    sleep 1
+    echo "Starting the installation for stock mainboard..."
+elif [ $dialog_exit -eq 1 ]; then
+    # User selected "No"
+    STOCK_MAINBOARD=false
+    # Show dialog with Continue/Abort options for non-stock mainboard warning
+    dialog --title "NON-stock Mainboard Warning" \
+           --backtitle "FreeDi installation" \
+           --yes-label "Continue" \
+           --no-label "Abort" \
+           --yesno "Notice: You are using a NON-stock mainboard.\n\nThe script will try to complete the installation, but because of the large variety of hardware a flawless run cannot be guaranteed.\n\nIf problems occur, please open a ticket:\nhttps://github.com/Phil1988/FreeDi" 12 70
+    if [ $? -ne 0 ]; then
+        # User selected Abort
+        echo -e "${RED}Installation cancelled by user.${RST}"
+        exit 1
+    fi
 else
-        STOCK_MAINBOARD=false
-        clear
-        echo -e "${YLW}Notice: You are using a NON-stock mainboard.${RST}"
-        echo -e "${YLW}The script will try to complete the installation,${RST}"
-        echo -e "${YLW}but because of the large variety of hardware${RST}"
-        echo -e "${YLW}a flawless run cannot be guaranteed.${RST}"
-        echo -e "${YLW}If problems occur, please open a ticket:${RST}"
-        echo -e "${YLW}https://github.com/Phil1988/FreeDi${RST}"
-        # red prompt — waits for a single key
-        read -n1 -s -r -p $'\033[1;31mPress any key to acknowledge and continue...\033[0m'
-        echo
+    # User cancelled or closed the dialog (typically CTRL+C or ESC)
+    echo -e "${RED}Installation cancelled by user.${RST}"
+    exit 1
 fi
 
 
